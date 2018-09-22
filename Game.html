@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<style>
+html, body {
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+}
+
+body {
+	overflow: hidden;
+}
+</style>
+
+<script type="text/javascript" src="Javascript-functions.js"></script>
+<script type="text/javascript" src="ComputerOpponent.js"></script>
+<script type="application/javascript">
+  
+  
+			var gameBoardPositions = [];
+			
+			//gameBoardPositions[1] = {x:25 + 700/3/2, y:25 + 700/3/2};
+			gameBoardPositions[0] = 0;
+
+			// gameBoardPostions 1-9; fill (0=empty | 1=x | 2=o ); marked=(true|false)
+			//  1: {x pos centre,y pos centre,fill, marked} 2: {x,y,fill, marked}, 3: {x,y,fill, marked}
+			//  4: {x,y,fill, marked} 5: {x,y,fill, marked}, 6: {x,y,fill, marked}
+			//  7: {x,y,fill, marked} 8: {x,y,fill, marked}, 9: {x,y,fill, marked}
+			for (var i = 0; i < 3; i++) {
+				for (var j = 0; j < 3; j++) {
+					gameBoardPositions.push({x:(25 + 700/3/2) * ((window.innerHeight - 25)/ 800) + ((25 + 700/3) * ((window.innerHeight - 25)/ 800)) * j, y:(25 + 700/3/2) * ((window.innerHeight - 25)/ 800) + ((25 + 700/3) * ((window.innerHeight - 25)/ 800)) * i, fill:0, marked:false})
+				}
+			}
+
+			// gameboard, where is it used?		
+			var gameBoard = [];
+			for(var i = 0; i < 10; i++) {
+				gameBoard.push(0);
+			}
+			
+
+			// 1=> player,  2=>computer-player			
+			var whosTurn = 1;
+
+			// keep track of turns to know when you just add new marks or when they have to be moved
+			var amountTurns = 0;
+			
+			
+	function init() {			
+		addMouseEventListener();
+	}
+			
+    function draw() {
+      var canvas = document.getElementById('canvas');
+      if (canvas.getContext) {
+        var ctx = canvas.getContext('2d');
+		
+		ctx.canvas.width  = window.innerHeight - 25;
+		ctx.canvas.height = window.innerHeight - 25;
+		
+		var gameSize = canvas.height;
+
+        // CIRKEL
+        	// position is 1-9
+			var drawCircle = function(position) {
+				var circleX = gameBoardPositions[position].x;
+				var circleY = gameBoardPositions[position].y;
+				
+				ctx.beginPath();
+				ctx.arc(circleX, circleY, 85 * (gameSize/ 800), 0, 360);
+				ctx.fillStyle = "red";
+				ctx.fill();
+				
+				
+				ctx.beginPath();
+				ctx.arc(circleX, circleY, 60 * (gameSize/ 800), 0, 360);
+				ctx.fillStyle = "white";
+				if (gameBoardPositions[position].marked === true) {
+					ctx.fillStyle = "#ccc";
+				}
+				ctx.fill();
+				
+				gameBoardPositions[position].fill = 1;
+				
+			};
+			
+		// KRYSS
+			// postion 1-9
+			var drawX = function(position) {
+				var x = gameBoardPositions[position].x;
+				var y = gameBoardPositions[position].y;
+				
+				ctx.fillStyle = "black";
+				
+				ctx.beginPath();
+				ctx.moveTo(x, y);
+				ctx.lineTo(x + 70 * (gameSize/ 800), y - 70 * (gameSize/ 800));
+				ctx.lineTo(x + 60 * (gameSize/ 800), y - 80 * (gameSize/ 800));
+				ctx.lineTo(x - 80 * (gameSize/ 800), y + 60 * (gameSize/ 800));
+				ctx.lineTo(x - 60 * (gameSize/ 800), y + 80 * (gameSize/ 800));
+				ctx.lineTo(x + 80 * (gameSize/ 800), y - 60 * (gameSize/ 800));
+				ctx.lineTo(x + 70 * (gameSize/ 800), y - 70 * (gameSize/ 800));
+				ctx.fill();
+				
+				ctx.beginPath();
+				ctx.moveTo(x, y);
+				ctx.lineTo(x - 70 * (gameSize/ 800), y - 70 * (gameSize/ 800));
+				ctx.lineTo(x - 60 * (gameSize/ 800), y - 80 * (gameSize/ 800));
+				ctx.lineTo(x + 80 * (gameSize/ 800), y + 60 * (gameSize/ 800));
+				ctx.lineTo(x + 60 * (gameSize/ 800), y + 80 * (gameSize/ 800));
+				ctx.lineTo(x - 80 * (gameSize/ 800), y - 60 * (gameSize/ 800));
+				ctx.lineTo(x - 70 * (gameSize/ 800), y - 70 * (gameSize/ 800));
+				ctx.fill();
+				
+				gameBoardPositions[position].fill = 2;
+				
+			};
+			
+		// SPELPLAN
+			var gameBoard = function() {
+				ctx.fillStyle = "black"; 
+				ctx.fillRect(0, 0, canvas.height, canvas.width);
+				ctx.clearRect(25 * (gameSize/ 800), 25 * (gameSize/ 800), 750 * (gameSize/ 800), 750 * (gameSize/ 800));
+				for (var i = 1; i < 3; i++) {
+					ctx.fillRect(((25 + 700/3) * (gameSize/ 800)) * i, 25 * (gameSize/ 800), 25 * (gameSize/ 800), 750 * (gameSize/ 800));
+					ctx.fillRect(25 * (gameSize/ 800), ((25 + 700/3) * (gameSize/ 800)) * i, 750 * (gameSize/ 800), 25 * (gameSize/ 800));
+				}
+				
+				
+			};
+			
+		// VINST
+			var testWin = function() {
+				if (gameBoardPositions[1].fill === gameBoardPositions[2].fill && gameBoardPositions[2].fill === gameBoardPositions[3].fill && gameBoardPositions[1].fill != 0 && gameBoardPositions[2].fill != 0 && gameBoardPositions[3].fill != 0 ||
+				gameBoardPositions[4].fill === gameBoardPositions[5].fill && gameBoardPositions[5].fill === gameBoardPositions[6].fill && gameBoardPositions[4].fill != 0 && gameBoardPositions[5].fill != 0 && gameBoardPositions[6].fill != 0 ||
+				gameBoardPositions[7].fill === gameBoardPositions[8].fill && gameBoardPositions[8].fill === gameBoardPositions[9].fill && gameBoardPositions[7].fill != 0 && gameBoardPositions[8].fill != 0 && gameBoardPositions[9].fill != 0 || 
+				gameBoardPositions[1].fill === gameBoardPositions[4].fill && gameBoardPositions[4].fill === gameBoardPositions[7].fill && gameBoardPositions[1].fill != 0 && gameBoardPositions[4].fill != 0 && gameBoardPositions[7].fill != 0 || 
+				gameBoardPositions[2].fill === gameBoardPositions[5].fill && gameBoardPositions[5].fill === gameBoardPositions[8].fill && gameBoardPositions[2].fill != 0 && gameBoardPositions[5].fill != 0 && gameBoardPositions[8].fill != 0 || 
+				gameBoardPositions[3].fill === gameBoardPositions[6].fill && gameBoardPositions[6].fill === gameBoardPositions[9].fill && gameBoardPositions[3].fill != 0 && gameBoardPositions[6].fill != 0 && gameBoardPositions[9].fill != 0	|| 
+				gameBoardPositions[1].fill === gameBoardPositions[5].fill && gameBoardPositions[5].fill === gameBoardPositions[9].fill && gameBoardPositions[1].fill != 0 && gameBoardPositions[5].fill != 0 && gameBoardPositions[9].fill != 0 ||
+				gameBoardPositions[3].fill === gameBoardPositions[5].fill && gameBoardPositions[5].fill === gameBoardPositions[7].fill && gameBoardPositions[3].fill != 0 && gameBoardPositions[5].fill != 0 && gameBoardPositions[7].fill != 0) {
+					console.log("You Won!!");
+			}
+			};
+			
+			var drawMarked = function(position) {
+				var x = gameBoardPositions[position].x;
+				var y = gameBoardPositions[position].y;
+				ctx.fillStyle = "#ccc";
+				ctx.fillRect(x - (700/3/2) * (gameSize / 800), y - (700/3/2) * (gameSize / 800), (700/3) * (gameSize / 800), (700/3) * (gameSize / 800));
+			};
+			
+		
+		var update = function() {
+
+			// draw game board
+			gameBoard();
+			
+			// make marked positions look marked
+			for (var i = 0; i < 10; i++) {
+					if (gameBoardPositions[i].marked === true) {
+						drawMarked(i);
+					}
+				}
+
+			// draw the players symbols in the game board 
+			for (var i = 0; i < 10; i++) {
+				switch(gameBoardPositions[i].fill) {
+					case gameBoardPositions[i].fill = 1:
+						drawCircle(i);
+						break;
+					case gameBoardPositions[i].fill = 2:
+						drawX(i);
+						break;
+					case gameBoardPositions[i].fill = 0:
+						break;
+						
+				}
+			}
+
+			// check if player won
+			if (gameBoardPositions[1].fill === 1 && gameBoardPositions[2].fill == 1 && gameBoardPositions[3].fill === 1 ||
+				gameBoardPositions[4].fill === 1 && gameBoardPositions[5].fill == 1 && gameBoardPositions[6].fill === 1 ||
+				gameBoardPositions[7].fill === 1 && gameBoardPositions[8].fill == 1 && gameBoardPositions[9].fill === 1 ||
+				gameBoardPositions[1].fill === 1 && gameBoardPositions[4].fill == 1 && gameBoardPositions[7].fill === 1 ||
+				gameBoardPositions[2].fill === 1 && gameBoardPositions[5].fill == 1 && gameBoardPositions[8].fill === 1 ||
+				gameBoardPositions[3].fill === 1 && gameBoardPositions[6].fill == 1 && gameBoardPositions[9].fill === 1 ||
+				gameBoardPositions[1].fill === 1 && gameBoardPositions[5].fill == 1 && gameBoardPositions[9].fill === 1 ||
+				gameBoardPositions[3].fill === 1 && gameBoardPositions[5].fill == 1 && gameBoardPositions[7].fill === 1) {
+				console.log("You Won");
+			}
+
+			// check if computer player won
+			if (gameBoardPositions[1].fill === 2 && gameBoardPositions[2].fill == 2 && gameBoardPositions[3].fill === 2 ||
+				gameBoardPositions[4].fill === 2 && gameBoardPositions[5].fill == 2 && gameBoardPositions[6].fill === 2 ||
+				gameBoardPositions[7].fill === 2 && gameBoardPositions[8].fill == 2 && gameBoardPositions[9].fill === 2 ||
+				gameBoardPositions[1].fill === 2 && gameBoardPositions[4].fill == 2 && gameBoardPositions[7].fill === 2 ||
+				gameBoardPositions[2].fill === 2 && gameBoardPositions[5].fill == 2 && gameBoardPositions[8].fill === 2 ||
+				gameBoardPositions[3].fill === 2 && gameBoardPositions[6].fill == 2 && gameBoardPositions[9].fill === 2 ||
+				gameBoardPositions[1].fill === 2 && gameBoardPositions[5].fill == 2 && gameBoardPositions[9].fill === 2 ||
+				gameBoardPositions[3].fill === 2 && gameBoardPositions[5].fill == 2 && gameBoardPositions[7].fill === 2) {
+				console.log("You Lost");
+			}
+
+
+			if (whosTurn === 2) {   // check if it the computer players turn
+					
+					computerPlay();
+					console.log("Computer Played");
+					amountTurns++;
+					whosTurn = 1;
+				}
+			
+		};
+		
+		// UPPDATERAR update VARJE 10 MILLISEKUNDER
+		setInterval(update, 10);
+		
+		
+      }
+    }
+
+  </script>
+<style type="text/css">
+canvas {
+	border: 1px solid black;
+}
+</style>
+</head>
+<body onload="init();draw();">
+
+	<canvas id="canvas"></canvas>
+</body>
+</html>
